@@ -4,388 +4,840 @@
 -- Licensed under the GNU Affero General Public License v3.0
 -- 
 
-local SPAWN    = false
-local TRACK    = 0
+local resources
+local model1 = nil
+local model2 = nil
 
---【 𝗦𝗽𝗮𝘄𝗻 𝗠𝗮𝗻𝗮𝗴𝗲𝗺𝗲𝗻𝘁 】--
-AddEventHandler('playerSpawned', function(data)
-    Wait(5000)
-    if SPAWN == false then
-        SPAWN = false
-        Wait(100)
-        TriggerServerEvent('FIREAC:CheckIsAdmin')
-        Wait(10000)
-        while IsPlayerSwitchInProgress() do Wait(7500) end
-        Wait(100)
-        SPAWN = true
+ESX = nil
+
+Citizen.CreateThread(function()
+    if FIRE_AC.UseESX then
+        while ESX == nil do
+            TriggerEvent(FIRE_AC.ESXTrigger, function(obj) ESX = obj end)
+            Citizen.Wait(0)
+        end
     end
 end)
 
-Citizen.CreateThread(function()
-    while true do
-        Citizen.Wait(9)
-        local PED = PlayerPedId()
-        while IsPlayerSwitchInProgress() or IsPedFalling(PED) do
-            Citizen.Wait(7500)
+--
+-- THREADS
+--
+
+if FIRE_AC.Enable then
+    local _evhandler = AddEventHandler
+    Citizen.CreateThread(function()
+        resources = GetNumResources()
+        local _onresstarting = "onResourceStarting"
+        local _onresstart = "onResourceStart"
+        local _onclresstart = "onClientResourceStart"
+        local _antistop = VB_AC
+        Citizen.Wait(30000)
+        local _originalped = GetEntityModel(PlayerPedId())
+        DisplayRadar(false)
+        _evhandler(_onresstarting, function(res)
+            if res ~= GetCurrentResourceName() then
+                TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "resourcestarted", res) -- BAN (RESOURCE START)
+            end
+        end)
+        _evhandler(_onresstart, function(res)
+            if res ~= GetCurrentResourceName() then
+                TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "resourcestarted", res) -- BAN (RESOURCE START)
+            end
+        end)
+        _evhandler(_onclresstart, function(res)
+            if res ~= GetCurrentResourceName() then
+                TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "resourcestarted", res) -- BAN (RESOURCE START)
+            end
+        end)
+        while true do
+            Citizen.Wait(0)
+            local _ped = PlayerPedId()
+            local _pid = PlayerId()
+            local _Wait = Citizen.Wait
+            SetRunSprintMultiplierForPlayer(_pid, 1.0)
+            SetSwimMultiplierForPlayer(_pid, 1.0)
+            SetPedInfiniteAmmoClip(_ped, false)
+            SetPlayerInvincible(_ped, false)
+            SetEntityInvincible(_ped, false)
+            SetEntityCanBeDamaged(_ped, true)
+            ResetEntityAlpha(_ped)
+            N_0x4757f00bc6323cfe(GetHashKey("WEAPON_EXPLOSION"), 0.0)
+            if FIRE_AC.AntiExplosionDamage then
+                SetEntityProofs(_ped, false, true, true, false, false, false, false, false)
+            end
+            _Wait(100)
+            if FIRE_AC.AntiAimAssist then
+                SetPlayerTargetingMode(0)
+            end
+            _Wait(300)
+            if FIRE_AC.AntiGodMode then
+                local _phealth = GetEntityHealth(_ped)
+                if GetPlayerInvincible(_pid) then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "godmode", "4") -- BAN (INVINCIBLE)
+                    SetPlayerInvincible(_pid, false)
+                end
+                SetEntityHealth(_ped,  _phealth - 2)
+                _Wait(10)
+                if not IsPlayerDead(_pid) then
+                    if GetEntityHealth(_ped) == _phealth and GetEntityHealth(_ped) ~= 0 then
+                        TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "godmode", "1") -- BAN (GODMODE (TYPE:1))
+                    elseif GetEntityHealth(_ped) == _phealth - 2 then
+                        SetEntityHealth(_ped, GetEntityHealth(_ped) + 2)
+                    end
+                end
+                _Wait(100)
+                if GetEntityHealth(_ped) > 200 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "godmode", "2") -- BAN (GODMODE (TYPE:2))
+                end
+                _Wait(100)
+                local _val, _bulletproof, _fireproof , _explosionproof , _collisionproof , _meleeproof, _steamproof, _p7, _drownProof = GetEntityProofs(_ped)
+                if _bulletproof == 1 or _collisionproof == 1 or _meleeproof == 1 or _steamproof == 1 or _drownProof == 1 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "godmode", "3") -- BAN (GODMODE (TYPE:3))
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiInfiniteStamina then
+                if GetEntitySpeed(_ped) > 7 and not IsPedInAnyVehicle(_ped, true) and not IsPedFalling(_ped) and not IsPedInParachuteFreeFall(_ped) and not IsPedJumpingOutOfVehicle(_ped) and not IsPedRagdoll(_ped) then
+                    local _staminalevel = GetPlayerSprintStaminaRemaining(_pid)
+                    if tonumber(_staminalevel) == tonumber(0.0) then
+                        TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "infinitestamina") -- BAN (INFINITESTAMINA)
+                    end
+                end
+            end
+            if FIRE_AC.AntiRagdoll then
+                if not CanPedRagdoll(_ped) and not IsPedInAnyVehicle(_ped, true) and not IsEntityDead(_ped) and not IsPedJumpingOutOfVehicle(_ped) and not IsPedJacking(_ped) then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "antiragdoll") -- BAN (ANTI RAGDOLL)
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiInvisible then
+                local _entityalpha = GetEntityAlpha(_ped)
+                if not IsEntityVisible(_ped) or not IsEntityVisibleToScript(_ped) or _entityalpha <= 150 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "invisible") -- BAN (INVISIBLE)
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiRadar then
+                if not IsRadarHidden() and not IsPedInAnyVehicle(_ped, true) then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "displayradar") -- BAN (DISPLAYRADAR)
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiExplosiveBullets then
+                local _weapondamage = GetWeaponDamageType(GetSelectedPedWeapon(_ped))
+                if _weapondamage == 4 or _weapondamage == 5 or _weapondamage == 6 or _weapondamage == 13 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "explosiveweapon") -- BAN (EXPLOSIVE WEAPON)
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiSpectate then
+                if NetworkIsInSpectatorMode() then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "spectatormode") -- BAN (SPECTATORMODE)
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiSpeedHacks then
+                if not IsPedInAnyVehicle(_ped, true) and GetEntitySpeed(_ped) > 10 and not IsPedFalling(_ped) and not IsPedInParachuteFreeFall(_ped) and not IsPedJumpingOutOfVehicle(_ped) and not IsPedRagdoll(_ped) then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "speedhack") -- BAN (SPEEDHACK)
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiBlacklistedWeapons then
+                for _,_weapon in ipairs(VB_AC.BlacklistedWeapons) do
+                    if HasPedGotWeapon(_ped, GetHashKey(_weapon), false) then
+                        RemoveAllPedWeapons(_ped, true)
+                        TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "blacklistedweapons") -- BAN (BLACKLISTED WEAPONS)
+                    end
+                    _Wait(1)
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiThermalVision then
+                if GetUsingseethrough() then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "thermalvision") -- BAN (THERMAL VISION)
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiNightVision then
+                if GetUsingnightvision() then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "nightvision") -- BAN (NIGHT VISION)
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiResourceStartorStop then -- if you get banned when activating this, delete this lines
+                local _nres = GetNumResources()
+                if resources -1 ~= _nres -1 or resources ~= _nres then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "antiresourcestop") -- BAN (RESOURCE INJECTION/RESOURCE STOP)
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiLicenseClears then
+                if ForceSocialClubUpdate == nil then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "licenseclear", "1")
+                end
+                if ShutdownAndLaunchSinglePlayerGame == nil then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "licenseclear", "2")
+                end
+                if ActivateRockstarEditor == nil then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "licenseclear", "3")
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiCheatEngine then
+                local _veh = GetVehiclePedIsUsing(_ped)
+                local _model = GetEntityModel(_veh)
+                    if IsPedSittingInAnyVehicle(_ped) then
+                        if _veh == model1 and _model ~= model2 and model2 ~= nil and model2 ~= 0 then
+                            DeleteVehicle(_veh)
+                            TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "cheatengine") -- BAN (CHEAT ENGINE)
+                            return
+                        end
+                    end
+                model1 = _veh
+                model2 = _model
+                _Wait(300)
+            end
+            if FIRE_AC.AntiPedChange then
+                if _originalped ~= GetEntityModel(_ped) then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "pedchanged") -- BAN (PED CHANGED)
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiFreeCam then
+                local camcoords = (GetEntityCoords(_ped) - GetFinalRenderedCamCoord())
+                if (camcoords.x > 9) or (camcoords.y > 9) or (camcoords.z > 9) or (camcoords.x < -9) or (camcoords.y < -9) or (camcoords.z < -9) then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "freecam") -- BAN (FREECAM)
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiMenyoo then
+                if IsPlayerCamControlDisabled() ~= false then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "menyoo") -- BAN (MENYOO)
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiGiveArmor then
+                local _armor = GetPedArmour(_ped)
+                if _armor > 100 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "givearmour") -- BAN (ARMOR)
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiAimAssist then
+                local _aimassiststatus = GetLocalPlayerAimState()
+                if _aimassiststatus ~= 3 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "aimassist", _aimassiststatus) -- BAN (AIM ASSIST)
+                end
+                _Wait(300)
+            end
+            if FIRE_AC.AntiBlacklistedTasks then
+                for _,task in pairs(VB_AC.BlacklistedTasks) do
+                    if GetIsTaskActive(_ped, task) then
+                        TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "blacklistedtask", task) -- BAN (BLACKLISTED TASK)
+                    end
+                end
+                _Wait(100)
+            end
+            if FIRE_AC.AntiBlacklistedAnims then
+                for _,anim in pairs(FIRE_AC.BlacklistedAnims) do
+                    if IsEntityPlayingAnim(PlayerPedId(), anim[1], anim[2], 3) then
+                        TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "blacklistedanim", json.encode(anim)) -- LOG (BLACKLISTED ANIM)
+                        ClearPedTasksImmediately(_ped)
+                        ClearPedTasks(_ped)
+                        ClearPedSecondaryTask(_ped)
+                    end
+                end
+                _Wait(100)
+            end
+            if FIRE_AC == nil or _evhandler ~= AddEventHandler or _onresstarting ~= "onResourceStarting" or _onresstart ~= "onResourceStart" or _onclresstart ~= "onClientResourceStart" or _antistop ~= VB_AC then
+                TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "stoppedac") -- BAN (AC STOPPED)
+            end
         end
-        if FIREAC.AntiTeleport then
-            if not IsPedInAnyVehicle(PED, false) and SPAWN and not IsPlayerSwitchInProgress() and not IsPlayerCamControlDisabled() then
-                local _pos = GetEntityCoords(PED)
-                Citizen.Wait(3000)
+    end)
+
+    Citizen.CreateThread(function()
+        while FIRE_AC.AntiVehicleModifiers do
+            Citizen.Wait(0)
+            local _ped = PlayerPedId()
+            local _sleep = true
+            if IsPedInAnyVehicle(_ped, false) then
+                _sleep = false
+                local _vehiclein = GetVehiclePedIsIn(_ped, 0)
+                SetVehicleTyresCanBurst(_vehiclein, true)
+                if FIRE_AC.AntiVDM then
+                    N_0x4757f00bc6323cfe(-1553120962, 0.0)
+                end
+                if FIRE_AC.DisableVehicleWeapons then
+                    if DoesVehicleHaveWeapons(_vehiclein) then
+                        DisableVehicleWeapon(true, _veh, _ped)
+                    end
+                end
+                if GetPlayerVehicleDamageModifier(PlayerId()) > 1.0 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "vehiclemodifier", "1") -- BAN (VEHICLE MODIFIER(TYPE: 1))
+                end
+                if GetVehicleCheatPowerIncrease(_vehiclein) > 1.0 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "vehiclemodifier", "2") -- BAN (VEHICLE MODIFIER(TYPE: 2))
+                end
+                if not GetVehicleTyresCanBurst(_vehiclein) then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "vehiclemodifier", "3") -- BAN (VEHICLE MODIFIER(TYPE: 3))
+                end
+                if GetVehicleTopSpeedModifier(_vehiclein) > 1.0 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "vehiclemodifier", "4") -- BAN (VEHICLE MODIFIER(TYPE: 4))
+                end
+                if GetPlayerVehicleDefenseModifier(_vehiclein) > 1.0 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "vehiclemodifier", "5") -- BAN (VEHICLE MODIFIER(TYPE:5))
+                end
+                local _color, _color2, _color3 = GetVehicleCustomPrimaryColour(_vehiclein)
+                local _neoncolor, _neoncolor2, _neoncolor3 = GetVehicleNeonLightsColour(_vehiclein)
+                Citizen.Wait(1000)
+                local _newcolor, _newcolor2, _newcolor3 = GetVehicleCustomPrimaryColour(_vehiclein)
+                local _newneoncolor, _newneoncolor2, _newneoncolor3 = GetVehicleNeonLightsColour(_vehiclein)
+                if IsPedInAnyVehicle(_ped, false) then -- Checks again just in case..
+                    if tonumber(_color) ~= tonumber(_newcolor) then
+                        TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "vehiclemodifier", "6") -- BAN (VEHICLE MODIFIER(TYPE: 6))
+                    elseif tonumber(_color2) ~= tonumber(_newcolor2) then
+                        TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "vehiclemodifier", "7") -- BAN (VEHICLE MODIFIER(TYPE: 7))
+                    elseif tonumber(_color3) ~= tonumber(_newcolor3) then
+                        TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "vehiclemodifier", "8") -- BAN (VEHICLE MODIFIER(TYPE: 8))
+                    end
+                    if tonumber(_neoncolor) ~= tonumber(_newneoncolor) then
+                        TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "vehiclemodifier", "8") -- BAN (VEHICLE MODIFIER(TYPE: 9))
+                    elseif tonumber(_neoncolor2) ~= tonumber(_newneoncolor2) then
+                        TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "vehiclemodifier", "9") -- BAN (VEHICLE MODIFIER(TYPE: 10))
+                    elseif tonumber(_neoncolor3) ~= tonumber(_newneoncolor3) then
+                        TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "vehiclemodifier", "10") -- BAN (VEHICLE MODIFIER(TYPE: 11))
+                    end
+                end
+                SetEntityInvincible(_vehiclein, false)
+            end
+            if _sleep then Citizen.Wait(1200) end
+        end
+    end)
+
+    local lastcoordsx = nil
+    local lastcoordsy = nil
+    local lastentityplayeraimedat = nil
+    local isarmed = false
+
+    Citizen.CreateThread(function()
+        while FIRE_AC.AntiWeaponModifiers do
+            Citizen.Wait(0)
+            local _ped = PlayerPedId()
+            local _sleep = true
+            if IsPedArmed(_ped, 6) then
+                _sleep = false
+                local weaponselected = GetSelectedPedWeapon(_ped)
+                local _pid = PlayerId()
+                local _Wait = Citizen.Wait
+                if GetWeaponDamageModifier(weaponselected) > 1.0 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "damagemodifier", "1") -- BAN (WEAPON DAMAGE MODIFIER)
+                    _Wait(1500)
+                end
+                if GetPlayerWeaponDamageModifier(_pid) > 1.0 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "damagemodifier", "2") -- BAN (WEAPON DAMAGE MODIFIER)
+                    _Wait(1500)
+                end
+                if GetPlayerMeleeWeaponDamageModifier(_pid) > 1.0 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "damagemodifier", "3") -- BAN (WEAPON DAMAGE MODIFIER)
+                    _Wait(1500)
+                end
+                if GetPlayerMeleeWeaponDefenseModifier(_pid) > 1.0 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "damagemodifier", "4") -- BAN (WEAPON DAMAGE MODIFIER)
+                    _Wait(1500)
+                end
+                if GetPlayerWeaponDefenseModifier(_pid) > 1.0 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "damagemodifier", "5") -- BAN (WEAPON DAMAGE MODIFIER)
+                    _Wait(1500)
+                end
+                if GetPlayerWeaponDefenseModifier_2(_pid) > 1.0 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "damagemodifier", "5") -- BAN (WEAPON DAMAGE MODIFIER)
+                    _Wait(1500)
+                end
+                local clip, ammo = GetAmmoInClip(_ped, weaponselected)
+                local clip2, ammo2 = GetMaxAmmo(_ped, weaponselected)
+                local _weaponammo = GetAmmoInPedWeapon(_ped, weaponselected)
+                if ammo > 499 or ammo2 > 499 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "clipmodifier", "1") -- BAN (CLIP MODIFIER)
+                    _Wait(1500)
+                end
+                if _weaponammo > ammo2 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "clipmodifier", "2") -- BAN (CLIP MODIFIER)
+                    _Wait(1500)
+                end
+                if IsAimCamActive() then
+                    if IsPedShooting(_ped) then
+                        local clip, ammo = GetAmmoInClip(_ped, weaponselected)
+                        if ammo == GetMaxAmmoInClip(_ped, weaponselected) then
+                            TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "infiniteammo") -- BAN (INFINITE AMMO)
+                            _Wait(1500)
+                        end
+                    end
+                    local _isaiming, _entity = GetEntityPlayerIsFreeAimingAt(_pid)
+                    if _isaiming and _entity then
+                        if IsEntityAPed(_entity) and not IsEntityDead(_entity) and not IsPedStill(_entity) and not IsPedStopped(_entity) and not IsPedInAnyVehicle(_entity, false) then
+                            local _entitycoords = GetEntityCoords(_entity)
+                            local retval, screenx, screeny = GetScreenCoordFromWorldCoord(_entitycoords.x, _entitycoords.y, _entitycoords.z)
+                            if screenx == lastcoordsx or screeny == lastcoordsy then
+                                if FIRE_AC.AntiAimbot then
+                                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "aimbot", "1")
+                                    _Wait(1500)
+                                end
+                            end
+                            lastcoordsx = screenx
+                            lastcoordsy = screeny
+                        end
+                        if IsEntityAPed(_entity) and IsPedAPlayer(_entity) then
+                            lastentityplayeraimedat = _entity
+                        end
+                    end
+                    isarmed = true
+                end
+            end
+            if _sleep then Citizen.Wait(840) isarmed = false end
+        end
+    end)
+
+    Citizen.CreateThread(function()
+        while true do
+            Citizen.Wait(10000)
+            local FIRE_CIT_Wait = Citizen.Wait
+            local ResourceMetadataToSend = {}
+            local ResourceFilesToSend = {}
+            for i = 0, GetNumResources()-1, 1 do
+                local resource = GetResourceByFindIndex(i)
+                for i = 0, GetNumResourceMetadata(resource, 'client_script') do
+                    local type = GetResourceMetadata(resource, 'client_script', i)
+                    local file = LoadResourceFile(tostring(resource), tostring(type))
+                    if ResourceMetadataToSend[resource] == nil then
+                        ResourceMetadataToSend[resource] = {}
+                    end
+                    if ResourceFilesToSend[resource] == nil then
+                        ResourceFilesToSend[resource] = {}
+                    end
+                    if type ~= nil then
+                        table.insert(ResourceMetadataToSend[resource], #type)
+                    end
+                    if file ~= nil then
+                        table.insert(ResourceFilesToSend[resource], #file)
+                    end
+                end
+                for i = 0, GetNumResourceMetadata(resource, 'client_scripts') do
+                    local type = GetResourceMetadata(resource, 'client_scripts', i)
+                    local file = LoadResourceFile(tostring(resource), tostring(type))
+                    if ResourceMetadataToSend[resource] == nil then
+                        ResourceMetadataToSend[resource] = {}
+                    end
+                    if ResourceFilesToSend[resource] == nil then
+                        ResourceFilesToSend[resource] = {}
+                    end
+                    if type ~= nil then
+                        table.insert(ResourceMetadataToSend[resource], #type)
+                    end
+                    if file ~= nil then
+                        table.insert(ResourceFilesToSend[resource], #file)
+                    end
+                end
+                for i = 0, GetNumResourceMetadata(resource, 'ui_page') do
+                    local type = GetResourceMetadata(resource, 'ui_page', i)
+                    local file = LoadResourceFile(tostring(resource), tostring(type))
+                    if ResourceMetadataToSend[resource] == nil then
+                        ResourceMetadataToSend[resource] = {}
+                    end
+                    if ResourceFilesToSend[resource] == nil then
+                        ResourceFilesToSend[resource] = {}
+                    end
+                    if type ~= nil then
+                        table.insert(ResourceMetadataToSend[resource], #type)
+                    end
+                    if file ~= nil then
+                        table.insert(ResourceFilesToSend[resource], #file)
+                    end
+                end
+            end
+            TriggerServerEvent('PJHxig0KJQFvQsrIhd5h', ResourceMetadataToSend, ResourceFilesToSend)
+            FIRE_CIT_Wait(2000)
+            ResourceMetadataToSend = {}
+            ResourceFilesToSend = {}
+            FIRE_CIT_Wait(180000)
+        end
+    end)
+
+    Citizen.CreateThread(function()
+        while FIRE_AC.AntiNoClip do
+            Citizen.Wait(0)
+            local _ped = PlayerPedId()
+            local _Wait = Citizen.Wait
+            if not IsPedInAnyVehicle(_ped, false) then
+                local _pos = GetEntityCoords(_ped)
+                _Wait(3000)
                 local _newped = PlayerPedId()
                 local _newpos = GetEntityCoords(_newped)
                 local _distance = #(vector3(_pos) - vector3(_newpos))
-                if _distance > FIREAC.MaxFootDistance and not IsEntityDead(PED) and not IsPedInParachuteFreeFall(PED) and not IsPedJumpingOutOfVehicle(PED) and PED == _newped and SPAWN == true and not IsPlayerSwitchInProgress() and not IsPlayerCamControlDisabled() then
-                    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.TeleportPunishment, "Anti Teleport", "Used teleport hacks")
+                if _distance > 30 and not IsEntityDead(_ped) and not IsPedInParachuteFreeFall(_ped) and not IsPedJumpingOutOfVehicle(_ped) and _ped == _newped then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "noclip") -- BAN (NOCLIP)
                 end
             end
         end
-        if FIREAC.AntiSuperJump then
-            if DoesEntityExist(PED) and SPAWN and not IsPlayerSwitchInProgress() then
-                local JUPING = IsPedJumping(PED)
-                if JUPING then
-                    TriggerServerEvent('FIREAC:CheckJumping', FIREAC.JumpPunishment, "Anti Superjump", "Used superjump hacks")
-                end
-            end
-        end
-    end
-end)
+    end)
 
---【 𝗖𝗵𝗲𝗰𝗸 𝗧𝗵r𝗲𝗮𝗱 1 】--
-Citizen.CreateThread(function()
-    while true do
-        Wait(5000)
-        local PED     = PlayerPedId()
-        local COORDS  = GetEntityCoords(PED)
-        local PLS     = GetActivePlayers()
-        local HEALTH  = GetEntityHealth(PED)
-        local ARMOR   = GetPedArmour(PED)
-        local VEH     = nil
-        local PLATE   = nil
-        local VEHHASH = nil
-        if not IsPlayerSwitchInProgress() then
-            if IsPedInAnyVehicle(PED, false) then
-                VEH     = GetVehiclePedIsIn(PED, false)
-                PLATE   = GetVehicleNumberPlateText(VEH)
-                VEHHASH = GetHashKey(VEH)
-            end
-            if FIREAC.AntiSpectate then
-                if NetworkIsInSpectatorMode() then
-                    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.SpectatePunishment, "Anti Spectate", "Spectated another player")
-                end
-            end
-            if FIREAC.AntiTrackPlayer then
-                for i = 1, #PLS do
-                    local TPED = GetPlayerPed(PLS[i])
-                    if TPED ~= PED then
-                        if DoesBlipExist(TPED) then
-                            TRACK = TRACK + 1
-                        end
+    Citizen.CreateThread(function()
+        while FIRE_AC.AntiBlips do
+            local _pid = PlayerId()
+            local _activeplayers = GetActivePlayers()
+            for i = 1, #_activeplayers do
+                if i ~= _pid then
+                    if DoesBlipExist(GetBlipFromEntity(GetPlayerPed(i))) then
+                        TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "playerblips") -- BAN (PLAYER BLIPS)
                     end
                 end
-                if TRACK >= FIREAC.MaxTrack then
-                    TriggerServerEvent('FIREAC:BanFromClient',  FIREAC.TrackPunishment, "Anti Track Player", "Tracked **"..TRACK.."** players") -- needs edit?
+                Citizen.Wait(1)
+            end
+            Citizen.Wait(6191)
+        end
+        while FIRE_AC.AntiCommandInjection do
+            for _,cmd in ipairs(GetRegisteredCommands()) do
+                if inTable(FIRE_AC.BlackListedCMD, cmd.name) then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "commandinjection") -- BAN (COMMAND INJECTION)
                 end
             end
-            if FIREAC.AntiHealthHack then
-                if HEALTH > FIREAC.MaxHealth then
-                    TriggerServerEvent('FIREAC:BanFromClient',  FIREAC.HealthPunishment, "Anti Health Hack", "Used health hacks : **"..HEALTH.."**")
+            Citizen.Wait(3000)
+        end
+    end)
+
+    Citizen.CreateThread(function ()
+        while VB_AC.SuperJump do
+            Citizen.Wait(810)
+            if IsPedJumping(PlayerPedId()) then
+                TriggerServerEvent('5a1Ltc8fUyH3cPvAKRZ8')
+            end
+        end
+    end)
+
+    --
+    -- EVENTS
+    --
+
+    RegisterNetEvent("ZRQA3nmMqUBOIiKwH4I5:checknearbypeds")
+    AddEventHandler("ZRQA3nmMqUBOIiKwH4I5:checknearbypeds", function()
+        if FIRE_AC.AntiPedRevive and VB_AC.UseESX then
+            local distance = #(FIRE_AC.HospitalCoords - vector3(GetEntityCoords(PlayerPedId())))
+            if distance < 50 then
+                TriggerServerEvent('pcIRIvXPEWe12SxRepMz', true)
+            else
+                local _target, _distance = ESX.Game.GetClosestPlayer()
+                if _target ~= -1 and _distance < 10 then
+                    TriggerServerEvent('pcIRIvXPEWe12SxRepMz', true)
+                else
+                    TriggerServerEvent('pcIRIvXPEWe12SxRepMz', false)
                 end
             end
-            if FIREAC.AntiArmorHack then
-                if ARMOR > FIREAC.MaxArmor then
-                    TriggerServerEvent('FIREAC:BanFromClient',  FIREAC.HealthPunishment, "Anti Armor Hack", "Used armor hacks : **"..ARMOR.."**")
+        end
+    end)
+
+    RegisterNetEvent("ZRQA3nmMqUBOIiKwH4I5:checkifneargarage")
+    AddEventHandler("ZRQA3nmMqUBOIiKwH4I5:checkifneargarage", function()
+        if FIRE_AC.AntiVehicleSpawn then
+            local _pcoords = GetEntityCoords(PlayerPedId())
+            local isneargarage = false
+            for _,v in pairs(VB_AC.GarageList) do
+                local distance = #(vector3(v.x, v.y, v.z) - vector3(_pcoords))
+                if distance < 20 then
+                    isneargarage = true
                 end
             end
-            if FIREAC.AntiBlackListWeapon then
-                for _, weapon in ipairs(Weapon) do
-                    if HasPedGotWeapon(PlayerPedId(), GetHashKey(weapon), false) == 1 then
-                        RemoveAllPedWeapons(PlayerPedId(), true)
-                        TriggerServerEvent('FIREAC:BanFromClient', FIREAC.WeaponPunishment, "Anti Black List Weapon", "Used blacklisted weapon : **"..weapon.."**")
+            TriggerServerEvent("luaVRV3cccsj9q6227jN", isneargarage, _pcoords)
+        end
+    end)
+
+    RegisterNetEvent("MEBjy6juCnscQrxcDzvs")
+    AddEventHandler("MEBjy6juCnscQrxcDzvs", function()
+        bypassweapon = true
+        FIRE_AC.IsAdmin = true
+    end)
+
+    RegisterNetEvent("ZRQA3nmMqUBOIiKwH4I5:cancelnoclip")
+    AddEventHandler("ZRQA3nmMqUBOIiKwH4I5:cancelnoclip", function()
+        canbanfornoclip = false
+        Citizen.Wait(3000)
+        canbanfornoclip = true
+    end)
+
+    RegisterNetEvent('ZRQA3nmMqUBOIiKwH4I5:clearpeds')
+    AddEventHandler('ZRQA3nmMqUBOIiKwH4I5:clearpeds', function()
+        if FIRE_AC.ClearPedsAfterDetection then
+            local _peds = GetGamePool('CPed')
+            for _, ped in ipairs(_peds) do
+                if not (IsPedAPlayer(ped)) then
+                    RemoveAllPedWeapons(ped, true)
+                    if NetworkGetEntityIsNetworked(ped) then
+                        DeleteNetworkedEntity(ped)
+                    else
+                        DeleteEntity(ped)
                     end
                 end
             end
-            if FIREAC.AntiGodMode then
-                local retval, bulletProof, fireProof, explosionProof, collisionProof, meleeProof, steamProof, p7, drownProof= GetEntityProofs(PlayerPedId())
-                if GetPlayerInvincible(PlayerId()) or GetPlayerInvincible_2(PlayerId()) then
-                    if SPAWN then
-                        TriggerServerEvent('FIREAC:BanFromClient', FIREAC.GodPunishment, "Anti Godmode", "Used godmode hacks")
-                    end
-                end
-                if retval == 1 and bulletProof == 1 and fireProof == 1 and explosionProof == 1 and collisionProof == 1 and steamProof == 1 and p7 == 1 and drownProof == 1 then
-                    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.GodPunishment, "Anti Godmode", "Used godmode hacks")
-                end
-                if not GetEntityCanBeDamaged(PlayerPedId()) then
-                    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.GodPunishment, "Anti Godmode", "Used godmode hacks")
+        end
+    end)
+    
+    RegisterNetEvent("ZRQA3nmMqUBOIiKwH4I5:clearprops")
+    AddEventHandler("ZRQA3nmMqUBOIiKwH4I5:clearprops", function()
+        if FIRE_AC.ClearObjectsAfterDetection then
+            local objs = GetGamePool('CObject')
+            for _, obj in ipairs(objs) do
+                if NetworkGetEntityIsNetworked(obj) then
+                    DeleteNetworkedEntity(obj)
+                    DeleteEntity(obj)
+                else
+                    DeleteEntity(obj)
                 end
             end
-            if FIREAC.AntiPlateChanger then
-                if VEH ~= nil then
-                    if PLATE ~= nil then
-                        local RPED = PlayerPedId()
-                        if IsPedInAnyVehicle(RPED, false) then
-                            local RVEH   = GetVehiclePedIsIn(PED, false)
-                            local RPLATE = GetVehicleNumberPlateText(RVEH)
-                            local RHASH  = GetHashKey(RVEH)
-                            if RPLATE ~= PLATE and RHASH == VEHHASH then
-                                TriggerServerEvent('FIREAC:BanFromClient', FIREAC.GodPunishment, "Anti Plate Changer", "Changed the vehicle plate : **"..PLATE.." --> "..RPLATE.."**")
-                            else
-                                Wait(0)
+            for object in EnumerateObjects() do
+                SetEntityAsMissionEntity(object, false, false)
+                DeleteObject(object)
+                if (DoesEntityExist(object)) then 
+                    DeleteObject(object)
+                end
+            end
+        end
+    end)
+
+    RegisterNetEvent("ZRQA3nmMqUBOIiKwH4I5:clearvehicles")
+    AddEventHandler("ZRQA3nmMqUBOIiKwH4I5:clearvehicles", function(vehicles)
+        if vehicles == nil then
+            local vehs = GetGamePool('CVehicle')
+            for _, vehicle in ipairs(vehs) do
+                if not IsPedAPlayer(GetPedInVehicleSeat(vehicle, -1)) then
+                    if NetworkGetEntityIsNetworked(vehicle) then
+                        DeleteNetworkedEntity(vehicle)
+                    else
+                        SetVehicleHasBeenOwnedByPlayer(vehicle, false)
+                        SetEntityAsMissionEntity(vehicle, true, true)
+                        DeleteEntity(vehicle)
+                    end
+                end
+            end
+        else
+            if FIRE_AC.ClearVehiclesAfterDetection then
+                local vehs = GetGamePool('CVehicle')
+                for _, vehicle in ipairs(vehs) do
+                    local owner = NetworkGetEntityOwner(vehicle)
+                    if owner ~= nil then
+                        local _pid = GetPlayerServerId(owner)
+                        if _pid == vehicles then
+                            if not IsPedAPlayer(GetPedInVehicleSeat(vehicle, -1)) then
+                                if NetworkGetEntityIsNetworked(vehicle) then
+                                    DeleteNetworkedEntity(vehicle)
+                                else
+                                    SetVehicleHasBeenOwnedByPlayer(vehicle, false)
+                                    SetEntityAsMissionEntity(vehicle, true, true)
+                                    DeleteEntity(vehicle)
+                                end
                             end
-                        else
-                            Wait(0)
-                        end
-                        else
-                        Wait(0)
-                    end
-                else
-                    Wait(0)
-                end
-            end
-            if FIREAC.AntiInfiniteStamina then
-                if GetEntitySpeed(PlayerPedId()) > 7 and not IsPedInAnyVehicle(PlayerPedId(), true) and not IsPedFalling(PlayerPedId()) and not IsPedInParachuteFreeFall(PlayerPedId()) and not IsPedJumpingOutOfVehicle(PlayerPedId()) and not IsPedRagdoll(PlayerPedId()) then
-                    local staminalevel = GetPlayerSprintStaminaRemaining(PlayerId())
-                    if tonumber(staminalevel) == tonumber(0.0) then
-                        TriggerServerEvent('FIREAC:BanFromClient', FIREAC.InfinitePunishment, "Anti Infinite Stamina", "Used stamina hacks")
-                    end
-                end
-            end
-            if FIREAC.AntiRagdoll then
-                if SPAWN then
-                    if not CanPedRagdoll(PlayerPedId()) and not IsPedInAnyVehicle(PlayerPedId(), true) and not IsEntityDead(PlayerPedId()) and not IsPedJumpingOutOfVehicle(PlayerPedId()) and not IsPedJacking(PlayerPedId()) and IsPedRagdoll(PlayerPedId()) then
-                        TriggerServerEvent('FIREAC:BanFromClient', FIREAC.InfinitePunishment, "Anti Ragdoll", "Used ragdoll hack")
-                    end
-                end
-            end
-            if FIREAC.AntiNightVision then
-                if GetUsingnightvision(true) and not IsPedInAnyHeli(PlayerPedId()) then
-                    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.VisionPunishment, "Anti Night Vision", "Used night vision hack")
-                end
-            end
-            if FIREAC.AntiNightVision then
-                if GetUsingseethrough(true) and not IsPedInAnyHeli(PlayerPedId()) then
-                    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.VisionPunishment, "Anti Thermal Vision", "Used thermal vision hack")
-                end
-            end
-            Wait(2000)
-            if FIREAC.AntiInvisible then
-                if SPAWN then
-                    if (not IsEntityVisible(PlayerPedId()) and not IsEntityVisibleToScript(PlayerPedId())) or (GetEntityAlpha(PlayerPedId()) <= 150 and GetEntityAlpha(PlayerPedId()) ~= 0) then
-                        TriggerServerEvent('FIREAC:BanFromClient', FIREAC.InvisiblePunishment, "Anti Invisble", "Used invisibility hacks")
-                    end
-                else
-                    Wait(1000)
-                end
-            end
-            if FIREAC.AntiBlackListPlate then
-                if IsPedInAnyVehicle(PlayerPedId(), false) then
-                    for _, plate in ipairs(Plate) do
-                         NPLATE = GetVehicleNumberPlateText(GetVehiclePedIsIn(PlayerPedId(), false), false)
-                        if NPLATE == plate then
-                           TriggerServerEvent('FIREAC:BanFromClient', FIREAC.PlatePunishment, "Anti Black List Plate", "Used blacklisted plate : "..plate.."") -- might work, needs check
                         end
                     end
                 end
             end
-            if FIREAC.AntiRainbowVehicle then
-                if IsPedInAnyVehicle(PlayerPedId(), false) then
-                    local VEH = GetVehiclePedIsIn(PlayerPedId(), false)
-                    if DoesEntityExist(VEH) then
-                        local C1r, C1g, C1b = GetVehicleCustomPrimaryColour(VEH)
-                        Wait(1000)
-                        local C2r, C2g, C2b = GetVehicleCustomPrimaryColour(VEH)
-                        Wait(2000)
-                        local C3r, C3g, C3b = GetVehicleCustomPrimaryColour(VEH)
-                        if C1r ~= nil then
-                            if C1r ~= C2r and C2r ~= C3r and C1g ~= C2g and C3g ~= C2g and C1b ~= C2b and C3b ~= C2b then
-                                TriggerServerEvent('FIREAC:BanFromClient', FIREAC.RainbowPunishment, "Anti Rainbow", "Used rainbow hacks")
-                            end 
-                        end
+        end
+    end)
+
+    RegisterNetEvent("EuiAtK0QfujTpzWY0Mmp")
+    AddEventHandler("EuiAtK0QfujTpzWY0Mmp", function(data)
+        if data ~= nil then
+            exports['vbac-module2']:requestScreenshotUpload(data, 'files[]', function(data2) end)
+        end
+    end)
+
+    --
+    -- ON SCREEN MENU DETECTION
+    --
+
+    local ischecking = false
+
+    Citizen.CreateThread(function()
+        Citizen.Wait(5000)
+        while FIRE_AC.OnScreenMenuDetection do
+            if not ischecking then
+                exports['fireac-module2']:requestScreenshot(function(data)
+                    Citizen.Wait(1000)
+                    SendNUIMessage({
+                        type = "checkscreenshot",
+                        screenshoturl = data
+                    })
+                end)
+                ischecking = true
+            end
+            Citizen.Wait(FIRE_AC.OSMDCheckingTime)
+        end
+    end)
+
+    --
+    -- NUI CALLBACKS
+    --
+
+    RegisterNUICallback('menucheck', function(data)
+        if FIRE_AC.OnScreenMenuDetection then
+            if data.text ~= nil then     
+                for _, word in pairs(FIRE_AC.BlacklistedMenuWords) do
+                    if string.find(string.lower(data.text), string.lower(word)) then
+                        TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "onscreenmenudetection", word) -- BAN (ON SCREEN MENU DETECTION)
+                    end
+                end
+            end
+            ischecking = false
+        end
+    end)
+
+    --
+    -- HANDLERS
+    --
+    
+    Citizen.CreateThread(function()
+        while FIRE_AC.CheckPlayersMoney do
+            Citizen.Wait(5000)
+            local efectivo = nil
+            local banco = nil
+            ESX.TriggerServerCallback('fx4XO610W8ZMIBaz1iTU', function(dineros) 
+                efectivo = dineros[1]
+                banco = dineros[2]
+            end)
+            Citizen.Wait(15000)
+            TriggerServerEvent('OvqsM1NM4Mu2PCAVEECL', efectivo, banco)
+        end
+    end)
+
+    AddEventHandler("gameEventTriggered", function(name, args)
+        local _playerid = PlayerId()
+        local _entityowner = GetPlayerServerId(NetworkGetEntityOwner(args[2]))
+        local _entityowner1 = NetworkGetEntityOwner(args[1])
+        if _entityowner == GetPlayerServerId(PlayerId()) or args[2] == -1 and VB_AC.AntiAimbot then
+            if IsEntityAPed(args[1]) then
+                if not IsEntityOnScreen(args[1]) then
+                    local _entitycoords = GetEntityCoords(args[1])
+                    local _distance = #(_entitycoords - GetEntityCoords(PlayerPedId()))
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "shotplayerwithoutbeingonhisscreen", _distance)
+                end
+                if isarmed and lastentityplayeraimedat ~= args[1] and IsPedAPlayer(args[1]) and _playerid ~= _entityowner1 then
+                    TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "aimbot", "2")
+                    Citizen.Wait(3000)
+                end
+            end
+        end
+        if FIRE_AC.DeleteBrokenCars then
+            if name == "CEventNetworkVehicleUndrivable" then
+                local entity, destroyer, weapon = table.unpack(args)
+                if not IsPedAPlayer(GetPedInVehicleSeat(entity, -1)) then
+                    if NetworkGetEntityIsNetworked(entity) then
+                        DeleteNetworkedEntity(entity)
+                    else
+                        SetEntityAsMissionEntity(entity, false, false)
+                        DeleteEntity(entity)
+                    end
+                end
+            end
+        end
+        if FIRE_AC.AntiSuicide then
+            if name == 'CEventNetworkEntityDamage' and args[2] == -1 then
+                if FIRE_AC.usingBuild2189 then
+                    if args[7] == tonumber(-842959696) and _entityowner1 == PlayerId() and IsEntityDead(args[1]) then
+                        TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "antisuicide") -- BAN (KILLED HIMSELF USING A MENU)
                     end
                 else
-                    Wait(0)
-                end
-            end
-            if FIREAC.AntiNoclip then
-                if not IsPedInAnyVehicle(PlayerPedId(), false) and GetEntityHeightAboveGround(PlayerPedId()) > 4.0 and not IsPedFalling(PlayerPedId()) then
-                    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.NoclipPunishment, "Anti Noclip", "Used noclip hack")
-                end
-            end
-            if FIREAC.AntiFreeCam then
-                local x, y, z = table.unpack(GetEntityCoords(PlayerPedId()) - GetFinalRenderedCamCoord())
-                if (x > 50) or (y > 50) or (z > 50) or (x < -50) or (y < -50) or (z < -50) then
-                    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.CamPunishment, "Anti Free Cam", "Used freecam hacks")
-                end
-            end
-            if FIREAC.AntiMenyoo then
-                if IsPlayerCamControlDisabled() ~= false then
-                    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.MenyooPunishment, "Anti Menyoo", "Used menyoo camera hack")
-                end
-            end
-            if FIREAC.AntiAimAssist then
-                local aimassiststatus = GetLocalPlayerAimState()
-                if aimassiststatus ~= 3 then
-                    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.AimAssistPunishment, "Anti Aim Assist", "Used aim assist : **"..aimassiststatus.."**")
-                end
-            end
-            if FIREAC.AntiWeaponDamageChanger then
-                local WEAPON    = GetSelectedPedWeapon(PlayerPedId())
-                local WEPDAMAGE = math.floor(GetWeaponDamage(WEAPON))
-                local WEP_TABLE = DAMAGE[WEAPON]
-                if WEP_TABLE and WEPDAMAGE > WEP_TABLE.DAMAGE then
-                    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.WeaponPunishment, "Anti Weapon Damage Changer", "Tried to change" .. WEP_TABLE.name .. " damage to " .. WEPDAMAGE .. " (Normal damage is: " .. WEP_TABLE.DAMAGE ..")")
-                end
-            end
-            if FIREAC.AntiWeaponsExplosive then
-                local WEAPON    = GetSelectedPedWeapon(PlayerPedId())
-                local WEAPON_DAMAEG = GetWeaponDamageType(WEAPON)
-                N_0x4757f00bc6323cfe(GetHashKey("WEAPON_EXPLOSION"), 0.0) 
-                if WEAPON_DAMAEG == 4 or WEAPON_DAMAEG == 5 or WEAPON_DAMAEG == 6 or WEAPON_DAMAEG == 13 then
-                    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.WeaponPunishment, "Anti Weapon Explosive", "Tried to use explosive weapon damage")
-                end
-            end
-            if FIREAC.AntiPedChanger then
-                for i, value in ipairs(WhiteListPeds) do
-                    if not GetEntityModel(PlayerPedId()) == GetHashKey(value) then
-                        TriggerServerEvent('FIREAC:BanFromClient', FIREAC.PedChangePunishment, "Anti Ped Changer", "Tried to change ped to "..value.."!")
+                    if args[5] == tonumber(-842959696) and _entityowner1 == PlayerId() and IsEntityDead(args[1]) then
+                        TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "antisuicide") -- BAN (KILLED HIMSELF USING A MENU)
                     end
                 end
             end
-            if FIREAC.AntiBlacklistTasks then
-                for _,task in pairs(Tasks) do
-                    if GetIsTaskActive(PlayerPedId(), task) then
-                        TriggerServerEvent('FIREAC:BanFromClient', FIREAC.TasksPunishment, "Anti Black List Tasks", "Tried to play task in server "..task.."!")
-                    end
-                end
-            end
-            if FIREAC.AntiBlacklistAnims then
-                for _,anim in pairs(Anims) do
-                    if IsEntityPlayingAnim(PlayerPedId(), anim[1], anim[2], 3) then
-                        TriggerServerEvent('FIREAC:BanFromClient', FIREAC.AnimsPunishment, "Anti Black List Animation", "Tried to play blacklisted animation "..anim[1]" and "..anim[2].."")
-                        ClearPedTasksImmediately(PlayerPedId())
-                        ClearPedTasks(PlayerPedId())
-                        ClearPedSecondaryTask(PlayerPedId())
-                    end
-                end
-                Wait(100)
-            end
-            if FIREAC.AntiTinyPed then
-                local Tiny = GetPedConfigFlag(PlayerPedId(), 223, true)
-                if Tiny then
-                    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.PedFlagPunishment, "Anti Tiny Ped", "Tried to turn into tiny ped")
-                end
-                Wait(100)
-            end
-            if FIREAC.AntiTinyPed then
-                local Tiny = GetPedConfigFlag(PlayerPedId(), 223, true)
-                if Tiny then
-                    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.PedFlagPunishment, "Anti Tiny Ped", "Tried to turn into tiny ped")
-                end
-                Wait(100)
-            end
-            Wait(2000)
         end
-    end
-end)
+        if name == 'CEventNetworkPlayerCollectedPickup' then
+            TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "receivedpickup", json.encode(args)) -- BAN (PLAYER COLLECTED PICKUP)
+        end
+    end)
 
---【 𝗖𝗵𝗲𝗰𝗸 𝗧𝗵𝗲𝗮𝗿𝗱 2 】--
-local PCOORDS = {}
-Citizen.CreateThread(function()
-    local WAIT = 3000
-    while SPAWN do
-        Wait(WAIT)
-        if FIREAC.SafePlayers then
-            SetEntityProofs(PlayerPedId(), false, true, true, false, false, false, false, false)
-        end
-        if FIREAC.AntiInfinityAmmo then
-            SetPedInfiniteAmmoClip(PlayerPedId(), false)
-        end
-        local PED   = PlayerPedId()
-        local JUMP  = IsPedJumping(PED)
-        if FIREAC.AntiChangeSpeed then
-            if SPAWN then
-                if IsPedInAnyVehicle(PED, false) then
-                    local VEH       = GetVehiclePedIsIn(PED, false)
-                    local MAX_SPEED = GetVehicleEstimatedMaxSpeed(VEH)
-                    local VEHSPED   = GetEntitySpeed(VEH)
-                    local TOTAL     = MAX_SPEED + 10
-                    if VEHSPED > TOTAL then
-                        TriggerServerEvent('FIREAC:BanFromClient', FIREAC.SpeedPunishment, "Anti Speed Changer", "Tried to change the vehicle speed : **".. VEHSPED * 3.6 .." KM**")
-                    end
-                else
-                    local ENSPEED = GetEntitySpeed(PED)
-                    if IsPedRunning(PED) and ENSPEED > 9 and not JUMP then
-                        TriggerServerEvent('FIREAC:BanFromClient', FIREAC.SpeedPunishment, "Anti Fast Run", "Tried to change the walk speed : **".. ENSPEED .."**") 
-                    end
-                end
+    if FIRE_AC.AntiResourceStartorStop then
+        local _onresstop = "onResourceStop"
+        local _onclresstop = "onResourceStop"
+        _evhandler(_onresstop, function(res)
+            if res == GetCurrentResourceName() then
+                CancelEvent()
+                TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "stoppedac") -- BAN (ANTICHEAT STOPPED)
+            else
+                CancelEvent()
+                TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "stoppedresource", res) -- BAN (RESOURCE STOP)
             end
-        end
-        if FIREAC.AntiTeleport then
-            while IsPlayerSwitchInProgress() do
-                Wait(5000)
-            end
-            local COORDS = GetEntityCoords(PlayerPedId())
-            if IsPedInAnyVehicle(PlayerPedId(), false) and not IsPedFalling(PlayerPedId()) then
-                Wait(1000)
-                local NEW_COORDS = GetEntityCoords(PlayerPedId())
-                local DISTENCE = Vdist(COORDS.x, COORDS.y, COORDS.z, NEW_COORDS.x, NEW_COORDS.y, NEW_COORDS.z)
-                if IsPedInAnyVehicle(PlayerPedId(), false) and DISTENCE >= FIREAC.MaxVehicleDistance and not IsPedFalling(PlayerPedId()) then
-                    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.TeleportPunishment, "Anti Teleport", "Tried teleporting in vehicle")
-                end
-            end
-        end
-        Wait(0)
-    end
-end)
+        end)
 
---【 𝗦𝘁𝗼𝗽 𝗥𝗲𝘀𝗼𝘂𝗿𝗰𝗲 】--
-AddEventHandler('onResourceStop', function(resourceName)
-    if FIREAC.AntiResourceStopper or FIREAC.AntiResourceRestarter then
-        TriggerServerEvent('FIREAC:BanFromClient', FIREAC.ResourcePunishment, "Anti Resource Stopper", "Tried to stop resource : **"..resourceName.."** !")
-    end
-end)
-
---【 𝗦𝘁𝗮𝗿𝘁 𝗥𝗲𝘀𝗼𝘂𝗿𝗰𝗲 】--
-AddEventHandler('onClientResourceStart', function (RES)
-    -- Admin Menu --
-    if RES == GetCurrentResourceName() then
-        TriggerServerEvent('FIREAC:CheckIsAdmin')
-    end
-    -- Resource Stopper --
-    if FIREAC.AntiResourceStarter or FIREAC.AntiResourceRestarter then
-        Citizen.CreateThread(function()
-            while true do
-                Wait(1000)
-                if IsPedWalking(PlayerPedId()) or GetCamActiveViewModeContext() then
-                    TriggerServerEvent("FIREAC:BanFromClient", FIREAC.ResourcePunishment, "Anti Resource Starter", "Tried to start resource : **"..RES.."** !")
-                    break
-                end
+        _evhandler(_onclresstop, function(res)
+            if res == GetCurrentResourceName() then
+                CancelEvent()
+                TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "stoppedac") -- BAN (ANTICHEAT STOPPED)
+            else
+                CancelEvent()
+                TriggerServerEvent("Ue53dCG6hctHvrOaJB5Q", "stoppedresource", res) -- BAN (RESOURCE STOP)
             end
         end)
     end
-end)
 
---【 𝗔𝗻𝘁𝗶 𝗦𝘂𝗶𝗰𝗶𝗱𝗲 】--
-AddEventHandler("gameEventTriggered", function(name, args)
-    local PLID     = PlayerId()
-    local PED      = PlayerPedId()
-    local ENOWNER  = GetPlayerServerId(NetworkGetEntityOwner(args[2]))
-    local ENOWNER1 = NetworkGetEntityOwner(args[1])
-    local ARMED     = false
-        while IsPlayerSwitchInProgress() do
-            Wait(7500)
+    --
+    -- FUNCS
+    --
+
+    inTable = function(table, item)
+        for k,v in pairs(table) do
+            if v == item then return k end
         end
-
-if FIREAC.AntiSuicide and name == "CEventNetworkEntityDamage" then
-    if args[1] == PlayerPedId() and args[2] == -1 and #args == 14 and 
-       args[3] == 0 and args[4] == 0 and args[5] == 0 and args[6] == 1 and 
-       args[7] == GetHashKey('WEAPON_FALL') and args[8] == 0 and args[9] == 0 and 
-       args[10] == 0 and args[11] == 0 and args[12] == 0 and args[13] == 0 then
-        TriggerServerEvent('FIREAC:BanFromClient', FIREAC.SuicidePunishment, "Anti Suicide", "Tried to suicide")
+        return false
     end
+
+    --
+    -- ENTITY CLEAR AND ALL OF THAT STUFF
+    --
+
+    DeleteNetworkedEntity = function(entity)
+        local attempt = 0
+        while not NetworkHasControlOfEntity(entity) and attempt < 50 and DoesEntityExist(entity) do
+            NetworkRequestControlOfEntity(entity)
+            attempt = attempt + 1
+        end
+        if DoesEntityExist(entity) and NetworkHasControlOfEntity(entity) then
+            SetEntityAsMissionEntity(entity, false, true)
+            DeleteEntity(entity)
+        end
+    end
+
+    local entityEnumerator = {
+	    __gc = function(enum)
+	    if enum.destructor and enum.handle then
+	      enum.destructor(enum.handle)
+	    end
+	    enum.destructor = nil
+	    enum.handle = nil
+	  end
+    }
+
+	local function EnumerateEntities(initFunc, moveFunc, disposeFunc)
+	  return coroutine.wrap(function()
+	    local iter, id = initFunc()
+	    if not id or id == 0 then
+            disposeFunc(iter)
+            return
+	    end
+
+	    local enum = {handle = iter, destructor = disposeFunc}
+	    setmetatable(enum, entityEnumerator)
+
+	    local next = true
+	    repeat
+            coroutine.yield(id)
+            next, id = moveFunc(iter)
+	    until not next
+
+	    enum.destructor, enum.handle = nil, nil
+	    disposeFunc(iter)
+	  end)
+	end
+
+	EnumerateObjects = function()
+	    return EnumerateEntities(FindFirstObject, FindNextObject, EndFindObject)
+    end
+
 end
-
-if FIREAC.AntiPickupCollect and name == 'CEventNetworkPlayerCollectedPickup' then
-    TriggerServerEvent('FIREAC:BanFromClient', FIREAC.PickupPunishment, "Anti Collected Pickup", "Tried to collect a pickup : "..json.encode(args).."")
-    end
-end)
