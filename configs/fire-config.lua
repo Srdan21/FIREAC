@@ -23,6 +23,22 @@ FIREAC.ServerConfig = {
     Port = "30120",
 }
 
+FIREAC.AntiCommandInjection = true
+FIREAC.BlackListedCMD = {
+	"killmenu",
+	"chocolate",
+	"pk",
+	"haha",
+	"lol",
+	"panickey",
+	"killmenu",
+	"panik",
+	"lynx",
+	"brutan",
+	"panic",
+	"purgemenu"
+}
+
 --【 𝗟𝗼𝗴 𝗼𝗳 𝗗𝗶𝘀𝗰𝗼𝗿𝗱 】--
 FIREAC.Log = {
     Ban        = "",
