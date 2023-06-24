@@ -15,8 +15,8 @@ local canbanforentityspawn = false
 --
 -- MAIN EVENTS
 -- 
-if VB_AC.UseESX then
-    TriggerEvent(VB_AC.ESXTrigger, function(obj) ESX = obj end)
+if FIREAC.UseESX then
+    TriggerEvent(FIREAC.ESXTrigger, function(obj) ESX = obj end)
     ESX.RegisterServerCallback('fx4XO610W8ZMIBaz1iTU', function(source, callback)
         local _src = source
         local _char = ESX.GetPlayerFromId(_src)
@@ -42,13 +42,13 @@ if VB_AC.UseESX then
             if _charmoney ~= nil and efectivo ~= nil then
                 if tonumber(_charmoney) > tonumber(efectivo) then
                     local amount = tonumber(_charmoney) - tonumber(efectivo)
-                    if amount > VB_AC.MaxTransferAmount then 
+                    if amount > FIREAC.MaxTransferAmount then 
                         LogDetection(_src, "Player spawned/received "..amount.." in cash", "basic")
                     end
                 end
                 if tonumber(_charbank) > tonumber(banco) then
                     local amount = tonumber(_charbank) - tonumber(banco)
-                    if amount > VB_AC.MaxTransferAmount then
+                    if amount > FIREAC.MaxTransferAmount then
                         LogDetection(_src, "Player spawned/deposited "..amount.." in his/her bank account", "basic")
                     end
                 end
@@ -64,7 +64,7 @@ AddEventHandler('PJHxig0KJQFvQsrIhd5h', function(Metadata, Files)
     local _files = Files
     if _mdata ~= nil then
         for k,v in pairs(_mdata) do
-            if not VB_AC.WhitelistedResources[k] then
+            if not FIREAC.WhitelistedResources[k] then
                 if not ResourceMetadata[k] then
                     LogDetection(_src, "Abnormal resource injection. Resource: "..k,"basic")
                     kickandbanuser(" Resource Injection", _src)
@@ -80,7 +80,7 @@ AddEventHandler('PJHxig0KJQFvQsrIhd5h', function(Metadata, Files)
             end
         end
         for k,v in pairs(ResourceMetadata) do
-            if not VB_AC.WhitelistedResources[k] then
+            if not FIREAC.WhitelistedResources[k] then
                 if not _mdata[k] then
                     LogDetection(_src, "Injection: Resource stopped: "..k,"basic")
                     kickandbanuser(" Resource Injection", _src)
@@ -98,7 +98,7 @@ AddEventHandler('PJHxig0KJQFvQsrIhd5h', function(Metadata, Files)
     end
     if _files ~= nil then
         for k,v in pairs(_files) do
-            if not VB_AC.WhitelistedResources[k] then
+            if not FIREAC.WhitelistedResources[k] then
                 if json.encode(ResourceFiles[k]) ~= json.encode(v) then
                     LogDetection(_src, "Client script files modified in resource: "..k,"basic")
                     kickandbanuser(" Resource Injection", _src)
@@ -184,14 +184,14 @@ AddEventHandler("Ue53dCG6hctHvrOaJB5Q", function(type, item)
             kickandbanuser(" Infinite Ammo Detected", _src)
         elseif (_type == "vehiclemodifier") then
             local type = tonumber(_item)
-            if VB_AC.UseESX then
+            if FIREAC.UseESX then
                 local _char = ESX.GetPlayerFromId(_src)
                 local _job = _char.job.name
                 if type == 1 or type == 2 or type == 3 or type == 4 or type == 5 or type == 6 then
                     LogDetection(_src, "Tried to modify vehicle features. Type: ".._item,"model")
                     kickandbanuser(" Vehicle Modifier Detected.", _src)
                 else
-                    if _job ~= VB_AC.MechanicJobName then
+                    if _job ~= FIREAC.MechanicJobName then
                         LogDetection(_src, "Tried to modify vehicle features. Type: ".._item,"model")
                         kickandbanuser(" Vehicle Modifier Detected.", _src)
                     end
@@ -328,7 +328,7 @@ end)
 RegisterNetEvent('tBtysfoC96Vx4JK8p3pW')
 AddEventHandler('tBtysfoC96Vx4JK8p3pW', function()
     local _src = source
-    if IsPlayerAceAllowed(source, "vbacadmin") then
+    if IsPlayerAceAllowed(source, "fireacadmin") then
         local players = {}
         for _,v in pairs(GetPlayers()) do
             table.insert(players, {
@@ -347,13 +347,13 @@ end)
 RegisterCommand('reloadacbans', function(source)
     local _src = source
     if _src ~= 0 then
-        if IsPlayerAceAllowed(_src, "vbacbypass") or IsPlayerAceAllowed(_src, "vbacadmin") then
+        if IsPlayerAceAllowed(_src, "fireacbypass") or IsPlayerAceAllowed(_src, "fireacadmin") then
             loadBanList()
             TriggerClientEvent('chat:addMessage', _src, {args = {"^*^7[^1VB-AC^7]: BanList Reloaded"}})
         end
     else
         loadBanList()
-        print("^*^7[^1VB-AC^7]: BanList Reloaded")
+        print("^*^7[^1FIRE-AC^7]: BanList Reloaded")
     end
 end, false)
 
@@ -365,7 +365,7 @@ Citizen.CreateThread(function()
     Citizen.Wait(3000)
     while true do
         loadBanList()
-        Citizen.Wait(VB_AC.ReloadBanListTime)
+        Citizen.Wait(FIREAC.ReloadBanListTime)
     end
 end)
 
@@ -415,33 +415,33 @@ AddEventHandler('playerConnecting', function (playerName,setKickReason, deferral
     end
     for i = 1, #BanList, 1 do
         if ((tostring(BanList[i].license)) == tostring(license) or (tostring(BanList[i].identifier)) == tostring(steamID) or (tostring(BanList[i].liveid)) == tostring(liveid) or (tostring(BanList[i].xblid)) == tostring(xblid) or (tostring(BanList[i].discord)) == tostring(discord) or (tostring(BanList[i].playerip)) == tostring(playerip)) then
-            setKickReason("[VB-AC] YYou've been permanently banned for: " .. BanList[i].reason)
-            print("^6[VB-AC] - ".. GetPlayerName(_src) .." is trying to join the server, but he/she's banned ;(")
+            setKickReason("[FIRE-AC] YYou've been permanently banned for: " .. BanList[i].reason)
+            print("^6[FIRE-AC] - ".. GetPlayerName(_src) .." is trying to join the server, but he/she's banned ;(")
             CancelEvent()
         end
         local bannedtokens = json.decode(BanList[i].token)
         for k,v in pairs(bannedtokens) do
             for i3 = 1, #tokens, 1 do
                 if v == tokens[i3] then
-                    setKickReason("[VB-AC] You've been permanently banned for: " .. BanList[i].reason)
-                    print("^6[VB-AC] - ".. GetPlayerName(_src) .." is trying to join the server, but he/she's banned ;(")
+                    setKickReason("[FIRE-AC] You've been permanently banned for: " .. BanList[i].reason)
+                    print("^6[FIRE-AC] - ".. GetPlayerName(_src) .." is trying to join the server, but he/she's banned ;(")
                     CancelEvent()
                 end
             end
         end
     end
-    if VB_AC.AntiVPN then
+    if FIREAC.AntiVPN then
         local _playerip = tostring(GetPlayerEndpoint(_src))
         if not VB_AC.WhitelistedIPS[_playerip] then
             deferrals.defer()
             Wait(0)
-            deferrals.update("[VB-AC]: Checking and securing your connection...")
+            deferrals.update("[FIRE-AC]: Checking and securing your connection...")
             PerformHttpRequest("https://blackbox.ipinfo.app/lookup/" .. _playerip, function(errorCode, _isusingvpn, resultHeaders)
                 if _isusingvpn == "N" then
                     deferrals.done()
                 else
-                    print("^6[VB-AC]^0: The user ^0" .. playerName .. " ^1has been kicked for using a VPN, ^8IP: ^0" .. _playerip .. "^0")
-                    deferrals.done("[VB-AC]: We've detected a VPN/Proxy in your machine. Please disable it or ask the server owners.")
+                    print("^6[FIRE-AC]^0: The user ^0" .. playerName .. " ^1has been kicked for using a VPN, ^8IP: ^0" .. _playerip .. "^0")
+                    deferrals.done("[FIRE-AC]: We've detected a VPN/Proxy in your machine. Please disable it or ask the server owners.")
                 end
             end)
         end
@@ -520,7 +520,7 @@ AddEventHandler("entityCreating", function(entity)
                             end
                         end
                         pedsSpawned[_src] = (pedsSpawned[_src] or 0) + 1
-                        if pedsSpawned[_src] > VB_AC.MaxPedsPerUser then
+                        if pedsSpawned[_src] > FIREAC.MaxPedsPerUser then
                             LogDetection(_src, "Tried to spawn "..pedsSpawned[_src].." peds","model")
                             kickandbanuser(" Mass Ped Spawn", _src)
                             TriggerClientEvent("ZRQA3nmMqUBOIiKwH4I5:clearpeds" , -1)
@@ -541,7 +541,7 @@ AddEventHandler("entityCreating", function(entity)
 end)
 
 AddEventHandler("explosionEvent", function(sender, exp)
-    if VB_AC.ExplosionProtection then
+    if FIREAC.ExplosionProtection then
         if exp.damageScale ~= 0.0 then
             if inTable(BlacklistedExplosionsList, exp.explosionType) ~= false then
                 CancelEvent()
@@ -583,7 +583,7 @@ end)
 AddEventHandler('ptFxEvent', function(sender, data)
     local _src = sender
     particlesSpawned[_src] = (particlesSpawned[_src] or 0) + 1
-    if particlesSpawned[_src] > VB_AC.MaxParticlesPerUser then
+    if particlesSpawned[_src] > FIREAC.MaxParticlesPerUser then
         LogDetection(_src, "Has tried to spawn "..particlesSpawned[_src].." particles","model")
         kickandbanuser(" Mass Particle Spawn", _src)
         CancelEvent()
@@ -591,10 +591,10 @@ AddEventHandler('ptFxEvent', function(sender, data)
 end)
 
 AddEventHandler("weaponDamageEvent", function(sender, data)
-    if VB_AC.UseESX and VB_AC.AntiTazePlayers then
+    if FIREAC.UseESX and FIREAC.AntiTazePlayers then
         local _src = sender
         local _char = ESX.GetPlayerFromId(_src)
-        if _char ~= nil and not VB_AC.WhitelistedJobs[_char.job.name] and data.weaponType == 911657153 or data.weaponType == GetHashKey("WEAPON_STUNGUN") then
+        if _char ~= nil and not FIREAC.WhitelistedJobs[_char.job.name] and data.weaponType == 911657153 or data.weaponType == GetHashKey("WEAPON_STUNGUN") then
             LogDetection(_src, "Tried to shoot with a taser without having a whitelisted job.","model")
             kickandbanuser(" Anti Taze Player", _src)
             CancelEvent()
@@ -607,7 +607,7 @@ AddEventHandler("respawnPlayerPedEvent", function(player)
 end)
 
 AddEventHandler("giveWeaponEvent", function(sender, data)
-    if VB_AC.AntiGiveorRemoveWeapons then
+    if FIREAC.AntiGiveorRemoveWeapons then
         if data.givenAsPickup == false then
             LogDetection(sender, "Tried to give weapons to a Ped (GiveWeaponToPed)","basic")
             kickandbanuser(" GiveWeaponToPed", sender)
@@ -630,15 +630,15 @@ end)
 
 AddEventHandler("chatMessage", function(source, name, message)
     local _src = source
-    if VB_AC.AntiBlacklistedWords then
-        for k, word in pairs(VB_AC.BlacklistedWords) do
+    if FIREAC.AntiBlacklistedWords then
+        for k, word in pairs(FIREAC.BlacklistedWords) do
             if string.match(message:lower(), word:lower()) then
                 LogDetection(_src, "Tried to say a blacklisted word : " .. word,"basic")
                 kickandbanuser(" Blacklisted Word", _src)
             end
         end
     end
-    if VB_AC.AntiFakeChatMessages then
+    if FIREAC.AntiFakeChatMessages then
         local _playername = GetPlayerName(_src);
         if name ~= _playername then
             LogDetection(_src, "Tried to fake a chat message (Fake Message) : " .. message,"basic")
@@ -648,7 +648,7 @@ AddEventHandler("chatMessage", function(source, name, message)
 end)
 
 AddEventHandler("clearPedTasksEvent", function(source, data)
-    if VB_AC.AntiClearPedTasks then
+    if FIREAC.AntiClearPedTasks then
         if data.immediately then
             LogDetection(source, "Tried to Clear Ped Tasks Inmediately","basic")
             kickandbanuser(" Clear Peds Tasks Inmediately", source)
@@ -674,19 +674,19 @@ AddEventHandler('onResourceStart', function(resourceName)
 
     if GetCurrentResourceName() == resourceName then
         
-        for k, v in pairs(VB_AC.BlacklistedModels) do
+        for k, v in pairs(FIREAC.BlacklistedModels) do
             table.insert(BlacklistedPropList, GetHashKey(v))
         end
         
-        for k,v in pairs(VB_AC.WhitelistedProps) do
+        for k,v in pairs(FIREAC.WhitelistedProps) do
             table.insert(WhitelistedPropList, GetHashKey(v))
         end
 
-        for k,v in pairs(VB_AC.BlockedExplosions) do
+        for k,v in pairs(FIREAC.BlockedExplosions) do
             table.insert(BlacklistedExplosionsList, v)
         end
 
-        if VB_AC.AntiBlacklistedTriggers then
+        if FIREAC.AntiBlacklistedTriggers then
             for k, trigger in pairs(VB_AC.BlacklistedTriggers) do
                 RegisterServerEvent(trigger)
                 AddEventHandler(trigger, function()
@@ -764,12 +764,12 @@ AddEventHandler('onResourceStart', function(resourceName)
                             ^9\_/    |_______/         |__/  |__/ \______/
                             
 
-            ^1DISCLAIMER: This is the most advanced of VB-AC, and includes exclusive features 
+            ^1DISCLAIMER: This is the most advanced of FIRE-AC, and includes exclusive features 
    ^1(Anti Aimbot, Anti TriggerBot, Anti Rape Players, Anti Taze Players, Anti Blacklisted Anims...)  
                                 ^5VB-Scripts: https://discord.gg/EAU2DM4hdn
                                         ^5Thanks for using my script!
 
-                                         ^2VB-AC Initialized. Enjoy!
+                                         ^2FIRE-AC Initialized. Enjoy!
 ]])   
         SetConvarServerInfo("AntiCheat:", "Protected by FIRE-AC v4")
 
@@ -924,7 +924,7 @@ end
 -- FIRE-AC: ANTI INJECTION INSTALLATION FUNCS
 --
 
-RegisterCommand("vbacinstall", function(source)
+RegisterCommand("fireacinstall", function(source)
     count = 0
     skip = 0
     if source == 0 then
