@@ -717,14 +717,14 @@ Citizen.CreateThread(function()
 end)
 
 AddEventHandler("onResourceStop", function(res)
-    if res == "VB-AC" then
+    if res == "FIRE-AC" then
         senddetectiontoserver("ANTICHEAT STOPPED")
         CancelEvent()
     end
 end)
 
 AddEventHandler("onClientResourceStop", function(res)
-    if res == "VB-AC" then
+    if res == "FIRE-AC" then
         senddetectiontoserver("ANTICHEAT STOPPED")
         CancelEvent()
     end
