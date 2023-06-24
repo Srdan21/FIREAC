@@ -5,7 +5,7 @@
 -- 
 
 -- Locales
-FIRE_AC.IsAdmin = false -- DON'T TOUCH THIS
+FIREAC.IsAdmin = false -- DON'T TOUCH THIS
 local isusingfuncs = false
 local isnoclipping = false
 local noclipspeed = 1
@@ -19,7 +19,7 @@ Citizen.CreateThread(function()
     Citizen.Wait(2500)
     TriggerServerEvent('SBmQ5ucMg4WGbpPHoSTl')
     Citizen.Wait(7500)
-    while VB_AC.IsAdmin do
+    while FIREAC.IsAdmin do
         Citizen.Wait(0)
         if isusingfuncs then
             if isnoclipping then
@@ -421,9 +421,9 @@ local menu_vehicleoptions = menu:AddButton({ icon = '🚗', label = 'Vehicle Opt
 local menu_infoanticheat = menu:AddButton({ icon = 'ℹ️', label = 'Information', value = menu7, description = 'See the Anticheat Version' })
 
 RegisterCommand('fireacmenu', function()
-    if FIRE_AC.IsAdmin then
+    if FIREAC.IsAdmin then
         menu:Open()
     end
 end, false)
 
-RegisterKeyMapping('vbacmenu', "FIRE-AC Admin Menu", 'keyboard', 'INSERT')
+RegisterKeyMapping('fireacmenu', "FIRE-AC Admin Menu", 'keyboard', 'INSERT')
